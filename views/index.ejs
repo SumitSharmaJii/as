@@ -5,8 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>To My Beautiful <%= name %></title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@400;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .font-playfair { font-family: 'Playfair Display', serif; }
+    .font-dancing-script { font-family: 'Dancing Script', cursive; }
+    .nav-card {
+      background: linear-gradient(145deg, rgba(255, 241, 242, 0.8), rgba(252, 231, 243, 0.8));
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 16px rgba(219, 39, 119, 0.05);
+    }
+    .nav-card:hover {
+      transform: translateY(-12px);
+      box-shadow: 0 25px 40px rgba(219, 39, 119, 0.15);
+      background: linear-gradient(145deg, rgba(255, 241, 242, 1), rgba(252, 231, 243, 1));
+      border-color: rgba(255, 255, 255, 0.8);
+    }
+    .nav-card h2 {
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+    }
+    .nav-card-link {
+      text-decoration: none !important;
+    }
+    .nav-card p {
+      color: #374151; /* text-gray-700 */
+    }
+    .game-button {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      transition: all 0.3s ease;
+    }
+    .game-button:hover {
+      background: white;
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+      transform: scale(1.05);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-pink-50">
   <!-- Floating Hearts Background -->
   <div class="floating-hearts">
     <div class="heart">💖</div>
@@ -20,24 +69,56 @@
     <div class="heart">💗</div>
   </div>
 
-  <div class="main-layout">
-    <div class="content-wrapper">
-      <div class="card text-center">
-        <h1 class="text-5xl font-bold text-pink-700 mb-6">To My Beautiful <%= name %></h1>
-        <p class="text-lg text-gray-800 mb-8 max-w-2xl mx-auto">
-          You are the reason my heart smiles every day. This website is just a small piece of my love for you.
-        </p>
+  <div class="main-layout py-16">
+    <!-- Header Section -->
+    <header class="text-center mb-16 fade-in">
+      <h1 class="font-playfair text-4xl text-gray-800">To My Beautiful</h1>
+      <p class="font-dancing-script text-7xl text-pink-600 my-2"><%= name %></p>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        This is a special place I created just for you, a small universe holding my endless love. Explore and know that every pixel is a testament to how much you mean to me.
+      </p>
+    </header>
 
-        <div class="nav-links">
-          <a href="/letter" class="btn btn-primary">
-            💌 Read My Letter
-          </a>
-          <a href="/love" class="btn btn-secondary">
-            ❤️ See How Much I Love You
-          </a>
-          <a href="/game" class="btn btn-outline text-2xl">
-            🎮 Catch the Hearts Game
-          </a>
+    <!-- Navigation Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+      <!-- Letter Card -->
+      <a href="/letter" class="nav-card nav-card-link p-8 rounded-2xl text-center fade-in" style="animation-delay: 0.2s;">
+        <div class="inline-block bg-white/50 p-4 rounded-full mb-4">
+          <div class="text-5xl">💌</div>
+        </div>
+        <h2 class="font-playfair text-2xl font-bold text-pink-700 mb-2">My Letter to You</h2>
+        <p class="mb-6">Words from my heart, written down just for you.</p>
+      </a>
+
+      <!-- Love Counter Card -->
+      <a href="/love" class="nav-card nav-card-link p-8 rounded-2xl text-center fade-in" style="animation-delay: 0.4s;">
+        <div class="inline-block bg-white/50 p-4 rounded-full mb-4">
+          <div class="text-5xl">❤️</div>
+        </div>
+        <h2 class="font-playfair text-2xl font-bold text-pink-700 mb-2">Our Love Story</h2>
+        <p class="mb-6">See the seconds, minutes, and days our love has grown.</p>
+      </a>
+
+      <!-- Games Card -->
+      <div class="nav-card p-8 rounded-2xl text-center fade-in" style="animation-delay: 0.6s;">
+        <div class="inline-block bg-white/50 p-4 rounded-full mb-4">
+          <div class="text-5xl">🎮</div>
+        </div>
+        <h2 class="font-playfair text-2xl font-bold text-pink-700 mb-2">Play a Little</h2>
+        <p class="mb-6">Some fun games to bring a smile to your face.</p>
+        <div class="space-y-4">
+          <form action="/game" method="POST" class="block">
+            <input type="hidden" name="girlName" value="<%= name %>">
+            <button type="submit" class="game-button w-full text-pink-600 font-semibold py-2 px-4 rounded-lg shadow-sm">
+              Catch the Hearts
+            </button>
+          </form>
+          <form action="/flappy" method="POST" class="block">
+            <input type="hidden" name="girlName" value="<%= name %>">
+            <button type="submit" class="game-button w-full text-rose-600 font-semibold py-2 px-4 rounded-lg shadow-sm">
+              Flappy Heart
+            </button>
+          </form>
         </div>
       </div>
     </div>

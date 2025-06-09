@@ -8,7 +8,6 @@
   <style>
     canvas {
       background-color: var(--light-pink);
-      border-radius: var(--border-radius);
       touch-action: none; /* Prevent default touch scrolling on canvas */
       max-width: 100%;
       height: auto;
@@ -16,30 +15,157 @@
     
     /* Responsive canvas sizing */
     @media (max-width: 640px) {
-      canvas {
+      .game-canvas-wrapper {
         width: 100%;
         max-width: 350px;
-        height: 525px; /* Maintain 3:2 aspect ratio */
+        height: 525px;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
       }
     }
     
     @media (min-width: 641px) and (max-width: 1024px) {
-      canvas {
+      .game-canvas-wrapper {
         width: 100%;
         max-width: 450px;
         height: 675px;
       }
+       canvas {
+        width: 100%;
+        height: 100%;
+      }
     }
     
     @media (min-width: 1025px) {
-      canvas {
+       .game-canvas-wrapper {
         width: 400px;
         height: 600px;
       }
+       canvas {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    /* New Music Button Styles */
+    .music-control-button {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px; /* w-18 */
+      height: 72px; /* h-18 */
+      background: linear-gradient(145deg, #fce7f3, #fbcfe8);
+      border-radius: 9999px;
+      border: 3px solid white;
+      box-shadow: 0 8px 16px rgba(219, 39, 119, 0.15);
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .music-control-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 24px rgba(219, 39, 119, 0.25);
+    }
+
+    .music-bars-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 28px;
+    }
+
+    .bar {
+      width: 5px;
+      height: 5px;
+      background: linear-gradient(to top, #db2777, #f472b6);
+      border-radius: 10px;
+      animation: wave 1.2s linear infinite;
+      animation-play-state: paused; /* Paused by default */
+    }
+
+    .bar:nth-child(2) {
+      animation-delay: -0.2s;
+    }
+
+    .bar:nth-child(3) {
+      animation-delay: -0.4s;
+    }
+    
+    .playing .bar {
+      animation-play-state: running;
+    }
+
+    @keyframes wave {
+      0%, 100% {
+        height: 5px;
+      }
+      25% {
+        height: 28px;
+      }
+      50% {
+        height: 12px;
+      }
+      75% {
+        height: 20px;
+      }
+    }
+
+    /* Modal Styles */
+    #gameOverModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    #gameOverModal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 384px;
+      margin: 16px;
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+    }
+
+    #gameOverModal.active .modal-content {
+      transform: scale(1);
     }
   </style>
 </head>
 <body>
+  <!-- Game Over Modal -->
+  <div id="gameOverModal">
+    <div class="modal-content">
+      <h2 class="text-4xl font-bold text-pink-700 mb-3">Game Over!</h2>
+      <p class="text-gray-600 mb-4">You did a great job! Here's your score:</p>
+      <p class="text-5xl font-bold text-pink-600 mb-6" id="finalScore">0</p>
+      <button onclick="restartGame()" class="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-8 py-3 rounded-full text-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all duration-300 transform hover:scale-105 shadow-lg">
+        Play Again
+      </button>
+    </div>
+  </div>
+
   <!-- Floating Hearts Background -->
   <div class="floating-hearts">
     <div class="heart">💖</div>
@@ -57,37 +183,70 @@
     <div class="game-container">
       <h1 class="text-3xl font-bold text-pink-700 mb-4 text-center">Catch the Hearts, <%= girlName %> 💖</h1>
       
-      <canvas id="gameCanvas" width="400" height="600"></canvas>
+      <!-- Game Canvas Container -->
+      <div class="game-canvas-wrapper bg-pink-100/50 p-2 rounded-3xl shadow-xl border-2 border-white/50">
+        <canvas id="gameCanvas" width="400" height="600" class="rounded-2xl block"></canvas>
+      </div>
       
-      <div class="card text-center">
-        <div class="mb-4">
-          <h2 class="text-2xl font-bold text-pink-700 mb-2">Score</h2>
-          <p class="text-3xl font-bold text-pink-600">
-            <span id="score">0</span>
-          </p>
+      <!-- Music Control Button -->
+      <div class="flex justify-center mb-6">
+        <div class="text-center">
+          <button onclick="togglePlay()" id="musicPlayerButton" class="music-control-button group">
+            <div class="music-bars-container">
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+            </div>
+          </button>
+          <div class="mt-3 text-pink-600 font-medium text-sm">Music</div>
+        </div>
+      </div>
+      
+      <div class="card bg-white/70 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-pink-100">
+        <div class="flex justify-between items-start mb-4">
+          <!-- Score Section -->
+          <div class="text-left">
+            <h2 class="text-lg font-semibold text-pink-800 tracking-wide">SCORE</h2>
+            <p class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500">
+              <span id="score">0</span>
+            </p>
+          </div>
+          <!-- Lives Section -->
+          <div class="text-right">
+            <h2 class="text-lg font-semibold text-pink-800 tracking-wide">LIVES</h2>
+            <div id="lives" class="flex space-x-2 justify-end mt-2">
+              <span class="life text-3xl">💖</span>
+              <span class="life text-3xl">💖</span>
+              <span class="life text-3xl">💖</span>
+            </div>
+          </div>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-800">
-          <div>
-            <h3 class="font-semibold mb-2">🎮 Controls</h3>
-            <p>• Arrow keys to move</p>
-            <p>• Click & drag on mobile</p>
-            <p>• Mouse drag on desktop</p>
-          </div>
-          <div>
-            <h3 class="font-semibold mb-2">🎯 Objective</h3>
-            <p>• Catch falling hearts</p>
-            <p>• Don't let them fall!</p>
-            <p>• Score as high as you can</p>
+        <!-- Controls & Objective Section -->
+        <div class="bg-pink-50/50 p-4 rounded-xl">
+          <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
+            <div>
+              <h3 class="font-bold text-pink-700 mb-2">🎮 Controls</h3>
+              <p>• Arrow keys</p>
+              <p>• Mouse / Touch drag</p>
+            </div>
+            <div>
+              <h3 class="font-bold text-pink-700 mb-2">🎯 Objective</h3>
+              <p>• Catch the hearts</p>
+              <p>• Don't miss any!</p>
+            </div>
           </div>
         </div>
       </div>
       
-      <a href="/" class="back-btn">
+      <a href="/" class="inline-block bg-pink-500 text-white px-6 py-2 rounded-full hover:bg-pink-600 transition-colors duration-300 shadow-md hover:shadow-lg mt-4">
         ← Back Home
       </a>
     </div>
   </div>
+
+  <!-- YouTube IFrame API -->
+  <div id="player" style="display: none;"></div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -97,6 +256,12 @@
     let score = 0;
     let hearts = [];
     let gameRunning = true;
+    let lives = 3;
+    let particles = [];
+
+    const gameOverModal = document.getElementById('gameOverModal');
+    const finalScoreEl = document.getElementById('finalScore');
+    const livesEl = document.getElementById('lives');
 
     // Responsive canvas sizing
     function resizeCanvas() {
@@ -139,43 +304,80 @@
     });
 
     function drawBasket() {
-      const primaryPink = getComputedStyle(document.documentElement).getPropertyValue('--primary-pink').trim();
+      const basketX = basket.x;
+      const basketY = basket.y;
+      const basketW = basket.width;
+      const basketH = basket.height;
       
-      // Draw basket with gradient effect
-      const gradient = ctx.createLinearGradient(basket.x, basket.y, basket.x, basket.y + basket.height);
-      gradient.addColorStop(0, primaryPink);
-      gradient.addColorStop(1, getComputedStyle(document.documentElement).getPropertyValue('--dark-pink').trim());
-      
+      // Main basket body
+      const gradient = ctx.createLinearGradient(basketX, basketY, basketX, basketY + basketH);
+      gradient.addColorStop(0, '#f9a8d4'); // Lighter pink
+      gradient.addColorStop(1, '#ec4899'); // Darker pink
       ctx.fillStyle = gradient;
-      ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+      ctx.fillRect(basketX, basketY, basketW, basketH);
       
-      // Add basket border
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--dark-pink').trim();
-      ctx.lineWidth = 2;
-      ctx.strokeRect(basket.x, basket.y, basket.width, basket.height);
+      // Basket Rim
+      ctx.fillStyle = '#db2777';
+      ctx.fillRect(basketX, basketY, basketW, 5);
+
+      // Add a subtle highlight for a 3D effect
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillRect(basketX + 2, basketY + 5, basketW - 4, 3);
     }
 
     function drawHeart(x, y) {
-      ctx.beginPath();
-      ctx.fillStyle = "#e11d48"; // Better red color
-      ctx.strokeStyle = "#be123c";
-      ctx.lineWidth = 2;
+      ctx.save();
       
-      // Draw a more detailed heart
       const size = 15;
+      
+      // Heart shape
+      ctx.beginPath();
       ctx.moveTo(x, y + size);
       ctx.bezierCurveTo(x, y, x - size, y, x - size, y + size);
       ctx.bezierCurveTo(x - size, y + size * 2, x, y + size * 3, x, y + size * 3);
       ctx.bezierCurveTo(x, y + size * 3, x + size, y + size * 2, x + size, y + size);
       ctx.bezierCurveTo(x + size, y, x, y, x, y + size);
+      ctx.closePath();
       
+      // Gradient Fill
+      const gradient = ctx.createRadialGradient(x, y + size, 1, x, y + size, size * 2);
+      gradient.addColorStop(0, '#f472b6'); // Bright center
+      gradient.addColorStop(1, '#be123c'); // Darker edge
+      ctx.fillStyle = gradient;
       ctx.fill();
+      
+      // Outline
+      ctx.strokeStyle = "#9f1239";
+      ctx.lineWidth = 2;
       ctx.stroke();
+
+      // Add a shine effect
+      ctx.beginPath();
+      ctx.arc(x - size / 4, y + size / 2, size / 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.fill();
+      
+      ctx.restore();
     }
 
     function drawHearts() {
       hearts.forEach(h => {
         drawHeart(h.x, h.y);
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach((p, index) => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        p.x += p.speedX;
+        p.y += p.speedY;
+        p.life--;
+        if (p.life <= 0) {
+          particles.splice(index, 1);
+        }
       });
     }
 
@@ -191,9 +393,21 @@
         ) {
           score++;
           document.getElementById("score").innerText = score;
+          createParticles(h.x, basket.y);
           return false;
         }
-        return h.y < canvas.height;
+        
+        // If heart is missed
+        if (h.y >= canvas.height) {
+          lives--;
+          updateLivesDisplay();
+          if (lives <= 0) {
+            endGame();
+          }
+          return false; // Remove heart
+        }
+
+        return true;
       });
     }
 
@@ -209,13 +423,14 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBasket();
       drawHearts();
+      drawParticles();
       updateHearts();
       requestAnimationFrame(draw);
     }
 
     // Keyboard controls
     document.addEventListener("keydown", e => {
-      if (!basket) return;
+      if (!basket || !gameRunning) return;
       
       if (e.key === "ArrowLeft" && basket.x > 0) {
         basket.x -= basket.speed;
@@ -236,7 +451,7 @@
     // For touch devices
     canvas.addEventListener("touchstart", e => {
       e.preventDefault();
-      if (!basket) return;
+      if (!basket || !gameRunning) return;
       
       dragging = true;
       const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
@@ -245,7 +460,7 @@
 
     canvas.addEventListener("touchmove", e => {
       e.preventDefault();
-      if (!dragging || !basket) return;
+      if (!dragging || !basket || !gameRunning) return;
       
       const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
       basket.x = clampBasketX(touchX);
@@ -259,7 +474,7 @@
     // For mouse drag
     canvas.addEventListener("mousedown", e => {
       e.preventDefault();
-      if (!basket) return;
+      if (!basket || !gameRunning) return;
       
       dragging = true;
       const mouseX = e.clientX - canvas.getBoundingClientRect().left;
@@ -267,7 +482,7 @@
     });
 
     canvas.addEventListener("mousemove", e => {
-      if (!dragging || !basket) return;
+      if (!dragging || !basket || !gameRunning) return;
       
       const mouseX = e.clientX - canvas.getBoundingClientRect().left;
       basket.x = clampBasketX(mouseX);
@@ -284,6 +499,118 @@
     // Start the game
     setInterval(spawnHeart, 800);
     draw();
+
+    // YouTube Player Controls
+    let player;
+    let isMuted = false;
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("player", {
+        height: "0",
+        width: "0",
+        videoId: "u2ah9tWTkmk", // Replace with your song's YouTube video ID
+        playerVars: {
+          autoplay: 1,
+          loop: 1,
+          playlist: "u2ah9tWTkmk", // Required for looping
+          controls: 0,
+          modestbranding: 1,
+          showinfo: 0
+        },
+        events: {
+          onReady: (event) => {
+            event.target.setVolume(50);
+            event.target.playVideo();
+          }
+        }
+      });
+    }
+
+    function togglePlay() {
+      const musicButton = document.getElementById('musicPlayerButton');
+      
+      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+        musicButton.classList.remove('playing');
+      } else {
+        player.playVideo();
+        musicButton.classList.add('playing');
+      }
+    }
+
+    function toggleMute() {
+      const musicMuteIcon = document.getElementById('musicMuteIcon');
+      
+      isMuted = !isMuted;
+      if (isMuted) {
+        player.mute();
+        if (musicMuteIcon) musicMuteIcon.textContent = '🔇';
+      } else {
+        player.unMute();
+        if (musicMuteIcon) musicMuteIcon.textContent = '🔊';
+      }
+    }
+
+    function updateLivesDisplay() {
+      livesEl.innerHTML = '';
+      for (let i = 0; i < lives; i++) {
+        const lifeHeart = document.createElement('span');
+        lifeHeart.className = 'life text-3xl';
+        lifeHeart.textContent = '💖';
+        livesEl.appendChild(lifeHeart);
+      }
+    }
+
+    function endGame() {
+      gameRunning = false;
+      finalScoreEl.innerText = score;
+      gameOverModal.classList.add('active');
+    }
+
+    function restartGame() {
+      gameOverModal.classList.remove('active');
+      
+      // Allow the modal to finish its exit animation before resetting the game
+      setTimeout(() => {
+        score = 0;
+        lives = 3;
+        hearts = [];
+        gameRunning = true;
+        
+        document.getElementById("score").innerText = score;
+        updateLivesDisplay();
+        particles = []; // Clear particles on restart
+        
+        // Reset basket position
+        if (basket) {
+          basket.x = (canvas.width - basket.width) / 2;
+          basket.y = canvas.height - 50;
+        }
+        
+        // Restart the game loop
+        draw();
+      }, 300); // This should match the CSS transition time
+    }
+
+    function createParticles(x, y) {
+      for (let i = 0; i < 20; i++) {
+        particles.push({
+          x: x + 10,
+          y: y,
+          size: Math.random() * 3 + 1,
+          speedX: (Math.random() - 0.5) * 4,
+          speedY: (Math.random() - 0.5) * 4,
+          color: `hsl(${Math.random() * 60 + 300}, 100%, 70%)`,
+          life: 60
+        });
+      }
+    }
+
+    // Load the YouTube IFrame API
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
   </script>
 </body>
 </html>

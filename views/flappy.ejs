@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Flappy Heart</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    body {
+      touch-action: manipulation;
+    }
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    canvas {
+      background-color: #f0f9ff; /* Light sky blue */
+      border-radius: 1.5rem; /* rounded-3xl */
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      max-width: 100%;
+      height: auto;
+      border: 4px solid white;
+    }
+    .score-display {
+      font-size: 2.25rem; /* text-4xl */
+      font-weight: 700;
+      color: #be185d; /* pink-700 */
+      margin-top: 1rem;
+    }
+
+    /* Music Button Styles */
+    .music-control-button {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px; /* w-18 */
+      height: 72px; /* h-18 */
+      background: linear-gradient(145deg, #fce7f3, #fbcfe8);
+      border-radius: 9999px;
+      border: 3px solid white;
+      box-shadow: 0 8px 16px rgba(219, 39, 119, 0.15);
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .music-control-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 24px rgba(219, 39, 119, 0.25);
+    }
+
+    .music-bars-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 28px;
+    }
+
+    .bar {
+      width: 5px;
+      height: 5px;
+      background: linear-gradient(to top, #db2777, #f472b6);
+      border-radius: 10px;
+      animation: wave 1.2s linear infinite;
+      animation-play-state: paused; /* Paused by default */
+    }
+
+    .bar:nth-child(2) {
+      animation-delay: -0.2s;
+    }
+
+    .bar:nth-child(3) {
+      animation-delay: -0.4s;
+    }
+    
+    .playing .bar {
+      animation-play-state: running;
+    }
+
+    @keyframes wave {
+      0%, 100% {
+        height: 5px;
+      }
+      25% {
+        height: 28px;
+      }
+      50% {
+        height: 12px;
+      }
+      75% {
+        height: 20px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-pink-50">
+  <!-- Floating Hearts Background -->
+  <div class="floating-hearts">
+    <div class="heart">💖</div>
+    <div class="heart">💕</div>
+    <div class="heart">💓</div>
+    <div class="heart">💗</div>
+    <div class="heart">💘</div>
+  </div>
+
+  <div class="game-container">
+    <h1 class="text-3xl font-bold text-pink-700 mb-4 text-center">Flappy Heart, <%= girlName %> 💖</h1>
+    <canvas id="flappyCanvas" width="384" height="640"></canvas>
+    <div id="scoreDisplay" class="score-display mb-4">0</div>
+
+    <!-- Music Control Button -->
+    <div class="flex justify-center mb-4">
+        <div class="text-center">
+          <button onclick="togglePlay()" id="musicPlayerButton" class="music-control-button group">
+            <div class="music-bars-container">
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+            </div>
+          </button>
+          <div class="mt-3 text-pink-600 font-medium text-sm">Music</div>
+        </div>
+    </div>
+
+     <a href="/" class="inline-block bg-pink-500 text-white px-6 py-2 rounded-full hover:bg-pink-600 transition-colors duration-300 shadow-md hover:shadow-lg mt-4">
+      ← Back Home
+    </a>
+  </div>
+
+  <!-- YouTube IFrame API -->
+  <div id="player" style="display: none;"></div>
+
+  <script>
+    const canvas = document.getElementById('flappyCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+
+    let frame = 0;
+    let score = 0;
+    let gameState = 'start'; // 'start', 'playing', 'over'
+
+    // Game constants
+    const gravity = 0.4;
+    const flapStrength = -7;
+    const pipeSpeed = 2;
+    const pipeGap = 150;
+    const pipeWidth = 60;
+    const pipeInterval = 120; // frames
+
+    // Player (Heart)
+    const heart = {
+      x: 80,
+      y: 250,
+      width: 40,
+      height: 40,
+      velocity: 0,
+    };
+
+    const pipes = [];
+
+    function drawHeart() {
+      ctx.save();
+      const size = heart.width / 2;
+      const x = heart.x;
+      const y = heart.y;
+      ctx.translate(x, y);
+      ctx.rotate(Math.min(heart.velocity / 20, Math.PI / 4)); // Tilt effect
+      
+      ctx.beginPath();
+      ctx.moveTo(0, size);
+      ctx.bezierCurveTo(0, 0, -size, 0, -size, size);
+      ctx.bezierCurveTo(-size, size * 1.8, 0, size * 2.8, 0, size * 2.8);
+      ctx.bezierCurveTo(0, size * 2.8, size, size * 1.8, size, size);
+      ctx.bezierCurveTo(size, 0, 0, 0, 0, size);
+      ctx.closePath();
+      
+      const gradient = ctx.createRadialGradient(0, size, 1, 0, size, size * 2);
+      gradient.addColorStop(0, '#f472b6');
+      gradient.addColorStop(1, '#be123c');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      ctx.strokeStyle = "#9f1239";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPipes() {
+      ctx.fillStyle = '#a78bfa'; // violet-400
+      ctx.strokeStyle = '#6d28d9'; // violet-800
+      ctx.lineWidth = 4;
+      pipes.forEach(pipe => {
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
+        ctx.strokeRect(pipe.x, 0, pipeWidth, pipe.top);
+        
+        ctx.fillRect(pipe.x, canvas.height - pipe.bottom, pipeWidth, pipe.bottom);
+        ctx.strokeRect(pipe.x, canvas.height - pipe.bottom, pipeWidth, pipe.bottom);
+      });
+    }
+    
+    function drawStartScreen() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 30px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Tap to Start', canvas.width / 2, canvas.height / 2);
+    }
+
+    function drawGameOverScreen() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 40px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 40);
+      ctx.font = '24px sans-serif';
+      ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + 10);
+      ctx.font = '18px sans-serif';
+      ctx.fillText('Tap to Restart', canvas.width / 2, canvas.height / 2 + 50);
+    }
+    
+    function update() {
+      if (gameState !== 'playing') return;
+
+      // Update heart
+      heart.velocity += gravity;
+      heart.y += heart.velocity;
+
+      // Check collision with ground/ceiling
+      if (heart.y + heart.height / 2 > canvas.height || heart.y - heart.height / 2 < 0) {
+        gameState = 'over';
+        return;
+      }
+      
+      // Update pipes
+      if (frame % pipeInterval === 0) {
+        const topHeight = Math.random() * (canvas.height - pipeGap - 100) + 50;
+        pipes.push({ x: canvas.width, top: topHeight, bottom: canvas.height - topHeight - pipeGap });
+      }
+
+      let passedPipe = false;
+      pipes.forEach(pipe => {
+        pipe.x -= pipeSpeed;
+        
+        // Collision detection
+        const heartLeft = heart.x - heart.width / 2;
+        const heartRight = heart.x + heart.width / 2;
+        const heartTop = heart.y - heart.height / 2;
+        const heartBottom = heart.y + heart.height / 2;
+
+        const pipeLeft = pipe.x;
+        const pipeRight = pipe.x + pipeWidth;
+        const pipeTop = pipe.top;
+        const pipeBottom = canvas.height - pipe.bottom;
+
+        if (heartRight > pipeLeft && heartLeft < pipeRight && (heartTop < pipeTop || heartBottom > pipeBottom)) {
+          gameState = 'over';
+        }
+
+        // Score
+        if (pipe.x + pipeWidth < heart.x && !pipe.passed) {
+          pipe.passed = true;
+          passedPipe = true;
+        }
+      });
+      
+      if(passedPipe) {
+        score++;
+        scoreDisplay.textContent = score;
+      }
+
+      // Remove off-screen pipes
+      pipes.filter(pipe => pipe.x + pipeWidth > 0);
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      drawPipes();
+      drawHeart();
+
+      if (gameState === 'start') {
+        drawStartScreen();
+      } else if (gameState === 'over') {
+        drawGameOverScreen();
+      }
+
+      update();
+      frame++;
+      requestAnimationFrame(loop);
+    }
+
+    function flap() {
+      if (gameState === 'playing') {
+        heart.velocity = flapStrength;
+      }
+    }
+    
+    function handleClick() {
+      if (gameState === 'start') {
+        gameState = 'playing';
+      } else if (gameState === 'playing') {
+        flap();
+      } else if (gameState === 'over') {
+        resetGame();
+      }
+    }
+
+    function resetGame() {
+      heart.y = 250;
+      heart.velocity = 0;
+      pipes.length = 0;
+      score = 0;
+      frame = 0;
+      scoreDisplay.textContent = score;
+      gameState = 'playing';
+    }
+
+    canvas.addEventListener('click', handleClick);
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        handleClick();
+      }
+    });
+
+    loop();
+
+    // YouTube Player Logic
+    let player;
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("player", {
+        height: "0",
+        width: "0",
+        videoId: "u2ah9tWTkmk", // Your song's YouTube video ID
+        playerVars: {
+          autoplay: 1,
+          loop: 1,
+          playlist: "u2ah9tWTkmk", // Required for looping
+        },
+        events: {
+          onReady: (event) => {
+            event.target.setVolume(50);
+            event.target.playVideo();
+            // Start the button in a playing state
+            const musicButton = document.getElementById('musicPlayerButton');
+            if (musicButton) {
+              musicButton.classList.add('playing');
+            }
+          }
+        }
+      });
+    }
+
+    function togglePlay() {
+      const musicButton = document.getElementById('musicPlayerButton');
+      if (!player || !musicButton) return;
+      
+      const isPlaying = player.getPlayerState() === YT.PlayerState.PLAYING;
+      
+      if (isPlaying) {
+        player.pauseVideo();
+        musicButton.classList.remove('playing');
+      } else {
+        player.playVideo();
+        musicButton.classList.add('playing');
+      }
+    }
+
+    // Load the YouTube IFrame API
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  </script>
+</body>
+</html> 
