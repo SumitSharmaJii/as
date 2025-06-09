@@ -1,0 +1,15 @@
+body::before {
+  content: '💖 💕 💓 💗 💘';
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  animation: float 5s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -20px); }
+  100% { transform: translate(-50%, 0); }
+}

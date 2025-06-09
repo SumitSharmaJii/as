@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Catch the Hearts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    canvas {
+      background-color: #ffe4e6; /* rose-100 */
+      border-radius: 1rem;
+      touch-action: none; /* Prevent default touch scrolling on canvas */
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 bg-rose-100">
+  <h1 class="text-3xl text-pink-700 font-bold mb-4">Catch the Hearts, <%= girlName %> 💖</h1>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <p class="mt-4 text-pink-600 font-medium">Score: <span id="score">0</span></p>
+  <a href="/" class="mt-4 text-pink-500 hover:underline">← Back Home</a>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const basket = {
+      x: 160,
+      y: 550,
+      width: 80,
+      height: 20,
+      speed: 6
+    };
+
+    let score = 0;
+    let hearts = [];
+
+    function drawBasket() {
+      ctx.fillStyle = "#d63384"; // pink
+      ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+    }
+
+    function drawHeart(x, y) {
+      ctx.beginPath();
+      ctx.fillStyle = "red";
+      ctx.moveTo(x, y);
+      ctx.bezierCurveTo(x, y - 20, x - 25, y - 20, x - 25, y);
+      ctx.bezierCurveTo(x - 25, y + 20, x, y + 30, x, y + 40);
+      ctx.bezierCurveTo(x, y + 30, x + 25, y + 20, x + 25, y);
+      ctx.bezierCurveTo(x + 25, y - 20, x, y - 20, x, y);
+      ctx.fill();
+    }
+
+    function drawHearts() {
+      hearts.forEach(h => {
+        drawHeart(h.x, h.y);
+      });
+    }
+
+    function updateHearts() {
+      hearts.forEach(h => h.y += h.speed);
+
+      // collision
+      hearts = hearts.filter(h => {
+        if (
+          h.y + 20 >= basket.y &&
+          h.x >= basket.x &&
+          h.x <= basket.x + basket.width
+        ) {
+          score++;
+          document.getElementById("score").innerText = score;
+          return false;
+        }
+        return h.y < canvas.height;
+      });
+    }
+
+    function spawnHeart() {
+      const x = Math.random() * (canvas.width - 30) + 10;
+      hearts.push({ x, y: 0, speed: 2 + Math.random() * 2 });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBasket();
+      drawHearts();
+      updateHearts();
+      requestAnimationFrame(draw);
+    }
+
+    // Keyboard controls
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowLeft" && basket.x > 0) basket.x -= basket.speed;
+      if (e.key === "ArrowRight" && basket.x < canvas.width - basket.width) basket.x += basket.speed;
+    });
+
+    // Touch and mouse drag controls
+    let dragging = false;
+
+    function clampBasketX(x) {
+      return Math.min(Math.max(0, x - basket.width / 2), canvas.width - basket.width);
+    }
+
+    // For touch devices
+    canvas.addEventListener("touchstart", e => {
+      e.preventDefault();
+      dragging = true;
+      const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+      basket.x = clampBasketX(touchX);
+    });
+
+    canvas.addEventListener("touchmove", e => {
+      e.preventDefault();
+      if (!dragging) return;
+      const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+      basket.x = clampBasketX(touchX);
+    });
+
+    canvas.addEventListener("touchend", e => {
+      e.preventDefault();
+      dragging = false;
+    });
+
+    // For mouse drag
+    canvas.addEventListener("mousedown", e => {
+      e.preventDefault();
+      dragging = true;
+      const mouseX = e.clientX - canvas.getBoundingClientRect().left;
+      basket.x = clampBasketX(mouseX);
+    });
+
+    canvas.addEventListener("mousemove", e => {
+      if (!dragging) return;
+      const mouseX = e.clientX - canvas.getBoundingClientRect().left;
+      basket.x = clampBasketX(mouseX);
+    });
+
+    canvas.addEventListener("mouseup", e => {
+      dragging = false;
+    });
+
+    canvas.addEventListener("mouseleave", e => {
+      dragging = false;
+    });
+
+    setInterval(spawnHeart, 800);
+    draw();
+  </script>
+</body>
+</html>

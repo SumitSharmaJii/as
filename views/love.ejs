@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-red-100">
+<head>
+  <meta charset="UTF-8">
+  <title>How Much I Love You</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen text-center px-4">
+  <h1 class="text-4xl text-pink-700 font-bold mb-6">My Love for You, <%= girlName %></h1>
+
+  <div class="bg-white rounded-xl p-6 shadow-lg max-w-lg w-full space-y-4">
+    <p>Since <strong><%= loveStartDate.toDateString() %></strong>:</p>
+    <div id="liveCounters" class="space-y-2 text-xl font-medium text-pink-600">
+      <p>⏳ <span id="days"></span> days</p>
+      <p>🕐 <span id="hours"></span> hours</p>
+      <p>⏱️ <span id="minutes"></span> minutes</p>
+      <p>⏲️ <span id="seconds"></span> seconds</p>
+      <p>❤️ <span id="heartbeats"></span> heartbeats</p>
+    </div>
+  </div>
+
+  <a href="/" class="mt-6 inline-block text-pink-500 hover:underline">← Back Home</a>
+
+  <script>
+    const loveStart = new Date("<%= loveStartDate.toISOString() %>");
+    const beatsPerSecond = 1.2;
+
+    function updateLoveCounters() {
+      const now = new Date();
+      const elapsedMs = now - loveStart;
+      const seconds = Math.floor(elapsedMs / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      const heartbeats = Math.floor(seconds * beatsPerSecond);
+
+      document.getElementById("seconds").textContent = seconds % 60;
+      document.getElementById("minutes").textContent = minutes % 60;
+      document.getElementById("hours").textContent = hours % 24;
+      document.getElementById("days").textContent = days;
+      document.getElementById("heartbeats").textContent = heartbeats.toLocaleString();
+    }
+
+    updateLoveCounters();
+    setInterval(updateLoveCounters, 1000); // ⏱ Update every second
+  </script>
+</body>
+</html>
