@@ -1,15 +1,35 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-white">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Love Letter</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body class="p-10 text-gray-800">
-  <div class="max-w-2xl mx-auto bg-pink-50 p-8 rounded-2xl shadow-lg">
-    <h1 class="text-3xl font-bold mb-4 text-pink-700">My Love Letter to You</h1>
-    <p class="text-lg"><%= letter %></p>
-    <a href="/" class="mt-6 inline-block text-pink-500 hover:underline">← Back Home</a>
+<body>
+  <!-- Floating Hearts Background -->
+  <div class="floating-hearts">
+    <div class="heart">💖</div>
+    <div class="heart">💕</div>
+    <div class="heart">💓</div>
+    <div class="heart">💗</div>
+    <div class="heart">💘</div>
+    <div class="heart">💖</div>
+    <div class="heart">💕</div>
+    <div class="heart">💓</div>
+    <div class="heart">💗</div>
+  </div>
+
+  <div class="letter-container">
+    <div class="letter-content">
+      <h1 class="text-3xl font-bold mb-6 text-pink-700 text-center">My Love Letter to You</h1>
+      <div class="text-gray-800">
+        <%= letter %>
+      </div>
+      <a href="/" class="back-btn">
+        ← Back Home
+      </a>
+    </div>
   </div>
 </body>
 </html>

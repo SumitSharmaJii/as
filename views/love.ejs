@@ -1,25 +1,77 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-red-100">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>How Much I Love You</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen text-center px-4">
-  <h1 class="text-4xl text-pink-700 font-bold mb-6">My Love for You, <%= girlName %></h1>
-
-  <div class="bg-white rounded-xl p-6 shadow-lg max-w-lg w-full space-y-4">
-    <p>Since <strong><%= loveStartDate.toDateString() %></strong>:</p>
-    <div id="liveCounters" class="space-y-2 text-xl font-medium text-pink-600">
-      <p>⏳ <span id="days"></span> days</p>
-      <p>🕐 <span id="hours"></span> hours</p>
-      <p>⏱️ <span id="minutes"></span> minutes</p>
-      <p>⏲️ <span id="seconds"></span> seconds</p>
-      <p>❤️ <span id="heartbeats"></span> heartbeats</p>
-    </div>
+<body>
+  <!-- Floating Hearts Background -->
+  <div class="floating-hearts">
+    <div class="heart">💖</div>
+    <div class="heart">💕</div>
+    <div class="heart">💓</div>
+    <div class="heart">💗</div>
+    <div class="heart">💘</div>
+    <div class="heart">💖</div>
+    <div class="heart">💕</div>
+    <div class="heart">💓</div>
+    <div class="heart">💗</div>
   </div>
 
-  <a href="/" class="mt-6 inline-block text-pink-500 hover:underline">← Back Home</a>
+  <div class="main-layout">
+    <div class="content-wrapper">
+      <div class="card text-center">
+        <h1 class="text-4xl font-bold text-pink-700 mb-6">My Love for You, <%= girlName %></h1>
+        
+        <p class="text-lg text-gray-800 mb-6">
+          Since <strong><%= loveStartDate.toDateString() %></strong>:
+        </p>
+
+        <div class="love-counters">
+          <div class="counter-item">
+            <div class="text-2xl font-bold text-pink-600">⏳</div>
+            <div class="text-xl font-medium text-pink-600">
+              <span id="days">0</span> days
+            </div>
+          </div>
+          
+          <div class="counter-item">
+            <div class="text-2xl font-bold text-pink-600">🕐</div>
+            <div class="text-xl font-medium text-pink-600">
+              <span id="hours">0</span> hours
+            </div>
+          </div>
+          
+          <div class="counter-item">
+            <div class="text-2xl font-bold text-pink-600">⏱️</div>
+            <div class="text-xl font-medium text-pink-600">
+              <span id="minutes">0</span> minutes
+            </div>
+          </div>
+          
+          <div class="counter-item">
+            <div class="text-2xl font-bold text-pink-600">⏲️</div>
+            <div class="text-xl font-medium text-pink-600">
+              <span id="seconds">0</span> seconds
+            </div>
+          </div>
+          
+          <div class="counter-item">
+            <div class="text-2xl font-bold text-pink-600">❤️</div>
+            <div class="text-xl font-medium text-pink-600">
+              <span id="heartbeats">0</span> heartbeats
+            </div>
+          </div>
+        </div>
+
+        <a href="/" class="back-btn">
+          ← Back Home
+        </a>
+      </div>
+    </div>
+  </div>
 
   <script>
     const loveStart = new Date("<%= loveStartDate.toISOString() %>");

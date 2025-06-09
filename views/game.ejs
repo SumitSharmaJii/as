@@ -2,51 +2,175 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catch the Hearts</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/styles.css">
   <style>
     canvas {
-      background-color: #ffe4e6; /* rose-100 */
-      border-radius: 1rem;
+      background-color: var(--light-pink);
+      border-radius: var(--border-radius);
       touch-action: none; /* Prevent default touch scrolling on canvas */
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Responsive canvas sizing */
+    @media (max-width: 640px) {
+      canvas {
+        width: 100%;
+        max-width: 350px;
+        height: 525px; /* Maintain 3:2 aspect ratio */
+      }
+    }
+    
+    @media (min-width: 641px) and (max-width: 1024px) {
+      canvas {
+        width: 100%;
+        max-width: 450px;
+        height: 675px;
+      }
+    }
+    
+    @media (min-width: 1025px) {
+      canvas {
+        width: 400px;
+        height: 600px;
+      }
     }
   </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4 bg-rose-100">
-  <h1 class="text-3xl text-pink-700 font-bold mb-4">Catch the Hearts, <%= girlName %> 💖</h1>
-  <canvas id="gameCanvas" width="400" height="600"></canvas>
-  <p class="mt-4 text-pink-600 font-medium">Score: <span id="score">0</span></p>
-  <a href="/" class="mt-4 text-pink-500 hover:underline">← Back Home</a>
+<body>
+  <!-- Floating Hearts Background -->
+  <div class="floating-hearts">
+    <div class="heart">💖</div>
+    <div class="heart">💕</div>
+    <div class="heart">💓</div>
+    <div class="heart">💗</div>
+    <div class="heart">💘</div>
+    <div class="heart">💖</div>
+    <div class="heart">💕</div>
+    <div class="heart">💓</div>
+    <div class="heart">💗</div>
+  </div>
+
+  <div class="main-layout">
+    <div class="game-container">
+      <h1 class="text-3xl font-bold text-pink-700 mb-4 text-center">Catch the Hearts, <%= girlName %> 💖</h1>
+      
+      <canvas id="gameCanvas" width="400" height="600"></canvas>
+      
+      <div class="card text-center">
+        <div class="mb-4">
+          <h2 class="text-2xl font-bold text-pink-700 mb-2">Score</h2>
+          <p class="text-3xl font-bold text-pink-600">
+            <span id="score">0</span>
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-800">
+          <div>
+            <h3 class="font-semibold mb-2">🎮 Controls</h3>
+            <p>• Arrow keys to move</p>
+            <p>• Click & drag on mobile</p>
+            <p>• Mouse drag on desktop</p>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2">🎯 Objective</h3>
+            <p>• Catch falling hearts</p>
+            <p>• Don't let them fall!</p>
+            <p>• Score as high as you can</p>
+          </div>
+        </div>
+      </div>
+      
+      <a href="/" class="back-btn">
+        ← Back Home
+      </a>
+    </div>
+  </div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    const basket = {
-      x: 160,
-      y: 550,
-      width: 80,
-      height: 20,
-      speed: 6
-    };
-
+    let basket;
     let score = 0;
     let hearts = [];
+    let gameRunning = true;
+
+    // Responsive canvas sizing
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      const containerWidth = container.clientWidth;
+      
+      if (containerWidth <= 640) {
+        canvas.width = 350;
+        canvas.height = 525;
+      } else if (containerWidth <= 1024) {
+        canvas.width = 450;
+        canvas.height = 675;
+      } else {
+        canvas.width = 400;
+        canvas.height = 600;
+      }
+      
+      // Initialize or reset basket position after resize
+      if (!basket) {
+        basket = {
+          x: (canvas.width - 80) / 2,
+          y: canvas.height - 50,
+          width: 80,
+          height: 20,
+          speed: 6
+        };
+      } else {
+        basket.x = (canvas.width - basket.width) / 2;
+        basket.y = canvas.height - 50;
+      }
+    }
+
+    // Initial resize
+    resizeCanvas();
+    
+    // Resize on window resize
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      hearts = []; // Clear hearts on resize
+    });
 
     function drawBasket() {
-      ctx.fillStyle = "#d63384"; // pink
+      const primaryPink = getComputedStyle(document.documentElement).getPropertyValue('--primary-pink').trim();
+      
+      // Draw basket with gradient effect
+      const gradient = ctx.createLinearGradient(basket.x, basket.y, basket.x, basket.y + basket.height);
+      gradient.addColorStop(0, primaryPink);
+      gradient.addColorStop(1, getComputedStyle(document.documentElement).getPropertyValue('--dark-pink').trim());
+      
+      ctx.fillStyle = gradient;
       ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+      
+      // Add basket border
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--dark-pink').trim();
+      ctx.lineWidth = 2;
+      ctx.strokeRect(basket.x, basket.y, basket.width, basket.height);
     }
 
     function drawHeart(x, y) {
       ctx.beginPath();
-      ctx.fillStyle = "red";
-      ctx.moveTo(x, y);
-      ctx.bezierCurveTo(x, y - 20, x - 25, y - 20, x - 25, y);
-      ctx.bezierCurveTo(x - 25, y + 20, x, y + 30, x, y + 40);
-      ctx.bezierCurveTo(x, y + 30, x + 25, y + 20, x + 25, y);
-      ctx.bezierCurveTo(x + 25, y - 20, x, y - 20, x, y);
+      ctx.fillStyle = "#e11d48"; // Better red color
+      ctx.strokeStyle = "#be123c";
+      ctx.lineWidth = 2;
+      
+      // Draw a more detailed heart
+      const size = 15;
+      ctx.moveTo(x, y + size);
+      ctx.bezierCurveTo(x, y, x - size, y, x - size, y + size);
+      ctx.bezierCurveTo(x - size, y + size * 2, x, y + size * 3, x, y + size * 3);
+      ctx.bezierCurveTo(x, y + size * 3, x + size, y + size * 2, x + size, y + size);
+      ctx.bezierCurveTo(x + size, y, x, y, x, y + size);
+      
       ctx.fill();
+      ctx.stroke();
     }
 
     function drawHearts() {
@@ -58,7 +182,7 @@
     function updateHearts() {
       hearts.forEach(h => h.y += h.speed);
 
-      // collision
+      // collision detection
       hearts = hearts.filter(h => {
         if (
           h.y + 20 >= basket.y &&
@@ -74,11 +198,14 @@
     }
 
     function spawnHeart() {
-      const x = Math.random() * (canvas.width - 30) + 10;
-      hearts.push({ x, y: 0, speed: 2 + Math.random() * 2 });
+      if (!gameRunning) return;
+      const x = Math.random() * (canvas.width - 50) + 25;
+      hearts.push({ x, y: -50, speed: 2 + Math.random() * 3 });
     }
 
     function draw() {
+      if (!gameRunning) return;
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBasket();
       drawHearts();
@@ -88,20 +215,29 @@
 
     // Keyboard controls
     document.addEventListener("keydown", e => {
-      if (e.key === "ArrowLeft" && basket.x > 0) basket.x -= basket.speed;
-      if (e.key === "ArrowRight" && basket.x < canvas.width - basket.width) basket.x += basket.speed;
+      if (!basket) return;
+      
+      if (e.key === "ArrowLeft" && basket.x > 0) {
+        basket.x -= basket.speed;
+      }
+      if (e.key === "ArrowRight" && basket.x < canvas.width - basket.width) {
+        basket.x += basket.speed;
+      }
     });
 
     // Touch and mouse drag controls
     let dragging = false;
 
     function clampBasketX(x) {
+      if (!basket) return 0;
       return Math.min(Math.max(0, x - basket.width / 2), canvas.width - basket.width);
     }
 
     // For touch devices
     canvas.addEventListener("touchstart", e => {
       e.preventDefault();
+      if (!basket) return;
+      
       dragging = true;
       const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
       basket.x = clampBasketX(touchX);
@@ -109,7 +245,8 @@
 
     canvas.addEventListener("touchmove", e => {
       e.preventDefault();
-      if (!dragging) return;
+      if (!dragging || !basket) return;
+      
       const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
       basket.x = clampBasketX(touchX);
     });
@@ -122,13 +259,16 @@
     // For mouse drag
     canvas.addEventListener("mousedown", e => {
       e.preventDefault();
+      if (!basket) return;
+      
       dragging = true;
       const mouseX = e.clientX - canvas.getBoundingClientRect().left;
       basket.x = clampBasketX(mouseX);
     });
 
     canvas.addEventListener("mousemove", e => {
-      if (!dragging) return;
+      if (!dragging || !basket) return;
+      
       const mouseX = e.clientX - canvas.getBoundingClientRect().left;
       basket.x = clampBasketX(mouseX);
     });
@@ -141,6 +281,7 @@
       dragging = false;
     });
 
+    // Start the game
     setInterval(spawnHeart, 800);
     draw();
   </script>
